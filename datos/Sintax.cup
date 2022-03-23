@@ -1,0 +1,135 @@
+package analizadorSintactico;
+import java_cup.runtime.Symbol;
+import analizadorSintactico.utiles.Utiles;
+
+parser code
+{:
+    private Symbol s;
+    public void syntax_error (Symbol s){
+        this.s = s;
+
+    }
+    public Symbol getS(){
+        return this.s;
+    }
+:};
+
+action code
+{:
+   
+    private Integer line_counter =0;       //***********************************
+    private Integer parraf_counter =0;
+ 
+
+    private String lineaCad ="";  
+:}
+
+terminal Poema_i, Poema_f, Verso_i, Verso_f, Parrafo_i, Parrafo_f, Exclamacion_i,
+Exclamacion_f, Interrogacion_i, Interrogacion_f, Punto, Coma, Punto_coma, Cadena_texto, Numero, ERROR;
+
+non terminal INICIO, PARRAFO, VERSO, PALABRAS, FRASE;
+
+non terminal Object LINEA;
+
+start with INICIO;
+
+INICIO::=Poema_i:pi PARRAFO:parr Poema_f
+{:
+    Utiles.checkVersoParrafo(line_counter, parraf_counter);
+   
+    Utiles.compararRimas();
+        
+:}
+;
+
+PARRAFO::= Parrafo_i VERSO Parrafo_f
+{:
+    parraf_counter++;
+    
+    Utiles.checkVersoIndividual(parraf_counter, line_counter) ;
+
+    
+:}
+|                                                                              
+PARRAFO Parrafo_i VERSO Parrafo_f                          
+{:
+    parraf_counter++;
+
+    Utiles.checkVersoIndividual(parraf_counter, line_counter) ;
+
+:}
+;
+
+VERSO::= Verso_i:vi LINEA:li Verso_f:vf
+{:
+    line_counter ++;
+    Utiles.getVerso(lineaCad, line_counter);
+    
+    lineaCad=""; //reinicio linea
+
+    
+:}
+
+ |
+         VERSO Verso_i:vi LINEA:lineav Verso_f 
+{:
+    line_counter ++;
+
+    Utiles.getVerso(lineaCad, line_counter);
+
+    lineaCad=""; 
+
+    if (lineav!=null) {
+           System.out.println("error"+line_counter); 
+    }
+    
+    //Utiles.guardarLinea(lineaV.toString());
+:}
+;
+
+LINEA::= Interrogacion_i FRASE Interrogacion_f | 
+         FRASE Interrogacion_i FRASE Interrogacion_f |
+         FRASE Interrogacion_i FRASE Interrogacion_f FRASE |
+         Interrogacion_i FRASE Interrogacion_f FRASE |
+         Exclamacion_i FRASE Exclamacion_f |
+         FRASE Exclamacion_i FRASE Exclamacion_f |
+         FRASE Exclamacion_i FRASE Exclamacion_f FRASE |
+         Exclamacion_i FRASE Exclamacion_f FRASE |
+         FRASE
+;
+
+FRASE::= PALABRAS:pal |
+         PALABRAS Coma |
+         PALABRAS Punto |
+         PALABRAS Punto_coma
+;
+
+PALABRAS::= Cadena_texto:cad 
+{:
+    if (cad!=null){
+        lineaCad = lineaCad +cad+" "; 
+    }
+:}
+
+|
+            Cadena_texto:cad Numero
+{:
+    if (cad!=null){
+        lineaCad = lineaCad +cad+"" ; 
+    }
+:}
+ |
+            PALABRAS Cadena_texto:cad
+{:
+    if (cad!=null){
+        lineaCad = lineaCad +cad+" "; 
+    }
+:}
+ | 
+            PALABRAS Cadena_texto:cad Numero
+{:
+    if (cad!=null){
+        lineaCad = lineaCad +cad+" "; 
+    }
+:}
+;
